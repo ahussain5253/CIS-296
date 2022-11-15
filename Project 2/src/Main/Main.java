@@ -18,10 +18,7 @@ public class Main extends Application {
         stage.setScene(scene);
         stage.show();
         
-        stage.setOnCloseRequest(event -> {
-            event.consume();
-            Exit(stage);
-        });
+        stage.setOnCloseRequest(event -> {event.consume(); Exit(stage);});
     }
     
     public void Exit(Stage stage) {
