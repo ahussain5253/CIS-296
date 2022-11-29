@@ -11,9 +11,6 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import java.util.Random;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.ButtonType;
 import javafx.scene.layout.AnchorPane;
 
 
@@ -26,29 +23,12 @@ public class MainController {
     @FXML
     private AnchorPane mainPane;
     
-    public void Exit(ActionEvent event) {
+    //Button One
+    public void One(ActionEvent event) {
         
-        Alert closeAlert = new Alert(AlertType.CONFIRMATION);
-        closeAlert.setTitle("Exit Game");
-        closeAlert.setHeaderText("Wait! You are about to exit the game!");
-        closeAlert.setContentText("Are you sure you want to exit?");
+  
+    }//end One
         
-        if (closeAlert.showAndWait().get() == ButtonType.OK) {           
-            stage = (Stage) mainPane.getScene().getWindow();
-            System.out.println("You have successfully exited the game!");
-            stage.close();            
-        }       
-    }//end Exit
-        
-    //Go back to main scene
-    public void Back(ActionEvent event) throws IOException {
-        root = FXMLLoader.load(getClass().getResource("FXML/Main.fxml"));
-        stage = (Stage)((Node)event.getSource()).getScene().getWindow();
-        scene = new Scene(root);
-        stage.setTitle("Rock-Paper-Scissors-Lizard-Spock Game");
-        stage.setScene(scene);
-        stage.show();        
-    }//end Back
       
     //User chooses Rock
     public void Rock(ActionEvent event) throws IOException{
