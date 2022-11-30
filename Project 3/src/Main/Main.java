@@ -7,6 +7,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.stage.Stage;
+import java.util.Stack;
 
 public class Main extends Application {
     @Override
@@ -37,6 +38,9 @@ public class Main extends Application {
     
     public static void main(String[] args) {
         launch(args);
+        
+        Stack calcOutStack = new Stack();
+        calcOutStack.push(4);
         
     }
 

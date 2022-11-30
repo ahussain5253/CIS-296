@@ -26,6 +26,7 @@ public class MainController {
     //Button One
     public void One(ActionEvent event) {
         
+        System.out.println("One");
   
     }//end One
         
