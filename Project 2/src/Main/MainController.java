@@ -22,13 +22,7 @@ public class MainController {
     
     @FXML
     private AnchorPane mainPane;
-    
-    //Button One
-    public void One(ActionEvent event) {
-        
-  
-    }//end One
-        
+       
       
     //User chooses Rock
     public void Rock(ActionEvent event) throws IOException{
