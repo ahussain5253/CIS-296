@@ -13,7 +13,6 @@ public class Main extends Application {
     public void start(Stage stage) throws Exception {
         Parent root = FXMLLoader.load(getClass().getResource("FXML/Main.fxml"));
         Scene scene = new Scene(root);
-        //scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
         stage.setTitle("Rock-Paper-Scissors-Lizard-Spock Game");
         stage.setScene(scene);
         stage.show();

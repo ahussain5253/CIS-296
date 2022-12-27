@@ -1,71 +1,125 @@
 package Main;
 
-import java.io.*;
-import java.net.*;
+import java.io.*; 
+import java.net.*; 
 import java.util.Date;
+import java.util.Enumeration; 
+import java.util.Hashtable; 
 import javafx.application.Application;
-import javafx.application.Platform;
-import javafx.scene.Scene;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextArea;
-import javafx.stage.Stage;
+import javafx.application.Platform; 
+import javafx.stage.Stage; 
 
-public class Server extends Application {
-  @Override // Override the start method in the Application class
-  public void start(Stage primaryStage) {
-    // Text area for displaying contents
-    TextArea ta = new TextArea();
 
-    // Create a scene and place it in the stage
-    Scene scene = new Scene(new ScrollPane(ta), 450, 200);
-    primaryStage.setTitle("Server"); // Set the stage title
-    primaryStage.setScene(scene); // Place the scene in the stage
-    primaryStage.show(); // Display the stage
-    
-    new Thread( () -> {
-      try {
-        // Create a server socket
-        ServerSocket serverSocket = new ServerSocket(8000);
-        Platform.runLater(() ->
-          ta.appendText("Server started at " + new Date() + '\n'));
-  
-        // Listen for a connection request
-        Socket socket = serverSocket.accept();
-  
-        // Create data input and output streams
-        DataInputStream inputFromClient = new DataInputStream(
-          socket.getInputStream());
-        DataOutputStream outputToClient = new DataOutputStream(
-          socket.getOutputStream());
-  
-        while (true) {
-          // Receive radius from the client
-          double radius = inputFromClient.readDouble();
-  
-          // Compute area
-          double area = radius * radius * Math.PI;
-  
-          // Send area back to the client
-          outputToClient.writeDouble(area);
-  
-          Platform.runLater(() -> {
-            ta.appendText("Radius received from client: " 
-              + radius + '\n');
-            ta.appendText("Area is: " + area + '\n'); 
-          });
+public class Server extends Application { 
+
+    int cNum = 0; 
+    ServerSocket serverSocket; 
+    Hashtable<Object, Object> hash = new Hashtable<>();
+
+    @Override
+    public void start(Stage primaryStage) {
+
+        new Thread(() -> {
+            listen();
+        }).start();
+    }
+
+    private void listen() {
+
+        try {
+            // Create server socket
+            serverSocket = new ServerSocket(8000); 
+            System.out.println("Server Started. Listening for a connection...\n");
+
+            while (true) { 
+
+                Socket socket = serverSocket.accept(); 
+                DataOutputStream output = new DataOutputStream(socket.getOutputStream()); 
+                cNum++;
+
+                Platform.runLater(() -> {
+
+                    System.out.println("Connection established...");
+                    System.out.println("Starting thread for client " + cNum + "\n");
+                    
+                });
+
+                hash.put(socket, output);
+                new HandleClient(socket);
+
+            }
+        } catch (IOException ex) {
+            
+            System.out.println(ex + " \n");
+            
         }
-      }
-      catch(IOException ex) {
-        ex.printStackTrace();
-      }
-    }).start();
-  }
 
-  /**
-   * The main method is only needed for the IDE with limited
-   * JavaFX support. Not needed for running from the command line.
-   */
-  public static void main(String[] args) {
-    launch(args);
-  }
+    }
+
+
+    Enumeration getOutput() {
+        return hash.elements();
+    }
+
+
+    void sendAll(String message) {
+
+        for (Enumeration e = getOutput(); e.hasMoreElements();) {
+            DataOutputStream dout = (DataOutputStream) e.nextElement();
+            try {
+
+                dout.writeUTF(message);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+
+
+    class HandleClient extends Thread {
+
+        private final Socket socket; 
+        private String message = "";
+
+        public HandleClient(Socket socket) throws IOException {
+            this.socket = socket;
+            start();
+        }
+
+        //Run Thread
+        @Override
+        public void run() {
+            try {
+
+                //Input from client
+                DataInputStream inputFromClient = new DataInputStream(socket.getInputStream());
+                while (true) {
+
+                    message = inputFromClient.readUTF(); 
+                    
+                    System.out.println(new Date() + "    " + message);
+
+                    sendAll(message); 
+
+                }
+
+            } catch (IOException e) {
+                
+                System.out.println("Error " + e + " \n");
+                
+                try {
+                    this.socket.close();
+                } catch (IOException ex) {
+                    System.out.println("Error " + e + " \n");
+                }
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
 }

@@ -1,91 +1,122 @@
 package Main;
 
-import java.io.*;
-import java.net.*;
-import javafx.application.Application;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.Scene;
+import java.io.*; 
+import java.net.*; 
+import javafx.application.Application; 
+import javafx.application.Platform;
+import javafx.geometry.Insets; 
+import javafx.geometry.Pos; 
+import javafx.scene.Scene; 
+import javafx.scene.control.TextArea; 
+import javafx.scene.layout.StackPane; 
+import javafx.stage.Stage; 
+import javafx.scene.control.Button; 
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.BorderPane;
-import javafx.stage.Stage;
 
 public class Client extends Application {
-  // IO streams
-  DataOutputStream toServer = null;
-  DataInputStream fromServer = null;
+    
+    //Initialize main variables
+    DataOutputStream tServer = null; 
+    DataInputStream fServer = null; 
+    Label username = new Label("Enter your name");
+    Label textl = new Label("Enter Message"); 
+    TextField textf = new TextField(); 
+    TextField namef = new TextField(); 
+    Button send = new Button("Send"); 
+    TextArea messagef = new TextArea(); 
 
-  @Override // Override the start method in the Application class
-  public void start(Stage primaryStage) {
-    // Panel p to hold the label and text field
-    BorderPane paneForTextField = new BorderPane();
-    paneForTextField.setPadding(new Insets(5, 5, 5, 5)); 
-    paneForTextField.setStyle("-fx-border-color: green");
-    paneForTextField.setLeft(new Label("Enter a radius: "));
-    
-    TextField tf = new TextField();
-    tf.setAlignment(Pos.BOTTOM_RIGHT);
-    paneForTextField.setCenter(tf);
-    
-    BorderPane mainPane = new BorderPane();
-    // Text area to display contents
-    TextArea ta = new TextArea();
-    mainPane.setCenter(new ScrollPane(ta));
-    mainPane.setTop(paneForTextField);
-    
-    // Create a scene and place it in the stage
-    Scene scene = new Scene(mainPane, 450, 200);
-    primaryStage.setTitle("Client"); // Set the stage title
-    primaryStage.setScene(scene); // Place the scene in the stage
-    primaryStage.show(); // Display the stage
-    
-    tf.setOnAction(e -> {
-      try {
-        // Get the radius from the text field
-        double radius = Double.parseDouble(tf.getText().trim());
-  
-        // Send the radius to the server
-        toServer.writeDouble(radius);
-        toServer.flush();
-  
-        // Get area from the server
-        double area = fromServer.readDouble();
-  
-        // Display to the text area
-        ta.appendText("Radius is " + radius + "\n");
-        ta.appendText("Area received from the server is "
-          + area + '\n');
-      }
-      catch (IOException ex) {
-        System.err.println(ex);
-      }
-    });
-  
-    try {
-      // Create a socket to connect to the server
-      Socket socket = new Socket("localhost", 8000);
-      // Socket socket = new Socket("130.254.204.36", 8000);
-      // Socket socket = new Socket("drake.Armstrong.edu", 8000);
 
-      // Create an input stream to receive data from the server
-      fromServer = new DataInputStream(socket.getInputStream());
+    @Override
+    public void start(Stage stage) throws IOException {
 
-      // Create an output stream to send data to the server
-      toServer = new DataOutputStream(socket.getOutputStream());
+        StackPane stackPane = new StackPane();
+        stackPane.setPadding(new Insets(10, 10, 10, 10));
+
+        StackPane.setAlignment(username, Pos.TOP_LEFT);
+        namef.setMaxWidth(200);
+        StackPane.setAlignment(namef, Pos.TOP_CENTER);
+
+        StackPane.setMargin(textl, new Insets(30, 0, 0, 0));
+        StackPane.setMargin(textf, new Insets(30, 0, 0, 0));
+        StackPane.setAlignment(textl, Pos.TOP_LEFT);
+        textf.setMaxWidth(200);
+        StackPane.setAlignment(textf, Pos.TOP_CENTER);
+
+        StackPane.setAlignment(send, Pos.BOTTOM_CENTER);
+        messagef.setMaxSize(450, 250);
+        StackPane.setAlignment(messagef, Pos.CENTER);
+
+        stackPane.getChildren().addAll(username, namef, send, messagef, textl, textf);
+
+        // Create scene and place in the stage
+        Scene scene = new Scene(stackPane, 500, 400);
+        stage.setTitle("Chat Room"); 
+        stage.setScene(scene); 
+        stage.show(); 
+
+        send.setOnAction(e -> {
+            try {
+                if (namef.getText().trim().length() == 0) { //name field is empty
+                    messagef.appendText("Please enter your name\n");
+                } else if (textf.getText().trim().length() == 0) { //message field is empty
+                    messagef.appendText("Please enter your message to send\n");
+                }
+                
+                if (namef.getText().trim().length() > 0 && textf.getText().trim().length() > 0) {
+                    tServer.writeUTF(namef.getText().trim() + " : " + textf.getText().trim());
+                    tServer.flush();
+                }
+
+            } catch (IOException ex) {
+                messagef.appendText(ex+"   \n");
+            }
+        });
+
+        try {
+            // Create a socket to connect to the server
+            Socket socket = new Socket("localhost", 8000); //socket with port number to connect server
+
+            // Create an output stream to send data to the server
+            tServer = new DataOutputStream(socket.getOutputStream());
+            new ReceiveMessage(socket); // send socket receieve class
+//            }
+        } catch (Exception ex) {
+            messagef.setText(ex.toString() + '\n');
+        }
+
     }
-    catch (IOException ex) {
-      ta.appendText(ex.toString() + '\n');
-    }
-  }
 
-  /**
-   * The main method is only needed for the IDE with limited
-   * JavaFX support. Not needed for running from the command line.
-   */
-  public static void main(String[] args) {
-    launch(args);
-  }
+    class ReceiveMessage implements Runnable {
+
+        Socket socket;//socket
+
+        public ReceiveMessage(Socket socket) { 
+            this.socket = socket;
+            Thread thread = new Thread(this);
+            thread.setDaemon(true);
+            thread.start();
+        }
+
+        @Override
+        public void run() {
+            try {
+                fServer = new DataInputStream(socket.getInputStream());
+                while (true) { 
+       
+                    String message = fServer.readUTF(); 
+                    tServer.flush(); 
+                    Platform.runLater(() -> {
+                        messagef.appendText(message + " \n");
+                    });
+                }
+            } catch (IOException e) {
+                messagef.appendText("Error " + e);
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
 }
